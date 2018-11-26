@@ -71,15 +71,24 @@ void loop() {
   
   // Hue communication
   if (GetHue()) {
-     Serial.println("Hue on/off: " + hueOn);
-     Serial.println("Hue bri: " + hueBri);
-     Serial.println("Hue hue: " + hueHue);
+    hueCmd = "";  // initialize command
+    Serial.println("Hue on/off: " + hueOn);
+    Serial.println("Hue bri: " + hueBri);
+    Serial.println("Hue hue: " + hueHue);
+
+    // Simple logic to turn on the light 
+    // with the ultra sound sensor
+    if (!hueOn && cm < 4) {
+      hueCmd = "{\"on\":true}";
+    } 
+    else {
+      hueCmd = "{\"on\":false}";
+    }   
   }
   else {
     Serial.println("Get request failed");
   }
   delay(1000);
-  
 }
 
 /*
