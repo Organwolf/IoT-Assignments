@@ -27,6 +27,7 @@ const unsigned int MAX_DIST = 23200;
 const int TRIG_PIN = 9;
 const int ECHO_PIN = 8;
 
+// Setup
 
 void setup() {
 
@@ -44,6 +45,7 @@ void setup() {
 }
 
 void loop() {
+  
   // Ultra sound variables
   unsigned long t1;
   unsigned long t2;
@@ -73,10 +75,12 @@ void loop() {
      Serial.println("Hue bri: " + hueBri);
      Serial.println("Hue hue: " + hueHue);
   }
+  else {
+    Serial.println("Get request failed");
+  }
   delay(1000);
   
 }
-
 
 /*
  
@@ -84,12 +88,14 @@ void loop() {
     Get light state (on,bri,hue)
  
 */
+
 boolean GetHue()
 {
   if (client.connect(hueHubIP, hueHubPort))
   {
     client.print("GET /api/");
     client.print(hueUsername);
+    // Is this needed when we only have one light?
     client.print("/lights/");
     client.print(hueLight + 1);  // hueLight zero based, add 1
     client.println(" HTTP/1.1");
@@ -119,4 +125,38 @@ boolean GetHue()
   }
   else
     return false;  // error reading on,bri,hue
+}
+
+/*
+ 
+    SetHue
+    Set light state using hueCmd command
+ 
+*/
+
+boolean SetHue()
+{
+  if (client.connect(hueHubIP, hueHubPort))
+  {
+    while (client.connected())
+    {
+      client.print("PUT /api/");
+      client.print(hueUsername);
+      client.print("/lights/");
+      client.print(hueLight + 1);  // hueLight zero based, add 1
+      client.println("/state HTTP/1.1");
+      client.println("keep-alive");
+      client.print("Host: ");
+      client.println(hueHubIP);
+      client.print("Content-Length: ");
+      client.println(hueCmd.length());
+      client.println("Content-Type: text/plain;charset=UTF-8");
+      client.println();  // blank line before body
+      client.println(hueCmd);  // Hue command
+    }
+    client.stop();
+    return true;  // command executed
+  }
+  else
+    return false;  // command failed
 }
