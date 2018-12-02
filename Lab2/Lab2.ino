@@ -3,21 +3,22 @@
 // and see if that makes any difference
 
 #include <SPI.h>
-#include <Ethernet2.h>
+#include <Ethernet.h>
 
 //  Hue constants
  
-const char hueHubIP[] = "192.168.20.173";  // Hue hub IP
-const char hueUsername[] = "jA4whBOy7c6SvvjeHkLnXO40SwuMEFlPRFA9YRSt";  // Hue username
+const char hueHubIP[] = "192.168.20.151";  // Hue hub IP
+const char hueUsername[] = "19eSZFKKJaNnYeRtIRYXV0MobofTkSBrPXrNKUn4";  // Hue username
 const int hueHubPort = 80;
 
 // Hue variables
 
 unsigned int hueLight;  // target light
-boolean hueOn;  // on/off
+String hueOn;  // on/off
 int hueBri;  // brightness value
 long hueHue;  // hue value
 String hueCmd;  // Hue command
+String hueBriTest = "";
 
 //  Ethernet
  
@@ -89,6 +90,8 @@ void loop() {
   else {
     hueCmd = "{\"bri\": 150}";
   } 
+  GetHue();
+  Serial.println("Hue brightness " + hueBriTest);
   SetHue();   
   delay(500);
 
@@ -110,31 +113,46 @@ boolean GetHue()
 {
   if (client.connect(hueHubIP, hueHubPort))
   {
-    client.print("GET /api/");
-    client.print(hueUsername);
-    client.print("/lights/");
-    client.print(2);  // hueLight zero based, add 1
+    client.print("GET /api/19eSZFKKJaNnYeRtIRYXV0MobofTkSBrPXrNKUn4/lights/1/");
+    //client.print(hueUsername);
+    //client.print("/lights/1");
+    //client.print(1);  // hueLight zero based, add 1
     client.println(" HTTP/1.1");
     client.print("Host: ");
     client.println(hueHubIP);
     client.println("Content-type: application/json");
     client.println("keep-alive");
     client.println();
+    delay(500);
     while (client.connected())
     {
-      if (client.available())
+      //delay(500);
+//      char c = client.read();
+//      Serial.print(c);
+      while (client.available())
       {
-        client.findUntil("\"on\":", "\0");
-        hueOn = (client.readStringUntil(',') == "true");  // if light is on, set variable to true
- 
-        client.findUntil("\"bri\":", "\0");
-        hueBri = client.readStringUntil(',').toInt();  // set variable to brightness value
- 
-        client.findUntil("\"hue\":", "\0");
-        hueHue = client.readStringUntil(',').toInt();  // set variable to hue value
-        
+//        char c = client.read();
+//        Serial.print(c);
+//        c = client.read();
+//        Serial.print(c);
+//        c = client.read();
+//        Serial.print(c);
+//        c = client.read();
+//        Serial.print(c);
+//        c = client.read();
+//        Serial.print(c);
+//        client.findUntil("\"on\":", "\0");
+//        if((client.readStringUntil(',') == "true")){
+//          hueOn = "true";
+//        }
+        //hueOn = (client.readStringUntil(',') == "true");  // if light is on, set variable to true
+// 
+        client.findUntil("\"bri\":", "\"bri\":");
+        //hueBri = client.readStringUntil(',').toInt();  // set variable to brightness value
+        hueBriTest = client.readStringUntil(',');
+//        client.findUntil("\"hue\":", "\0");
+//        hueHue = client.readStringUntil(',').toInt();  // set variable to hue value
         break;  // not capturing other light attributes yet
-
       }
       break;
     }
@@ -161,7 +179,7 @@ boolean SetHue()
       client.print("PUT /api/");
       client.print(hueUsername);
       client.print("/lights/");
-      client.print(2);  // hueLight zero based, add 1
+      client.print(1);  // hueLight zero based, add 1
       client.println("/state HTTP/1.1");
       client.println("keep-alive");
       client.print("Host: ");
