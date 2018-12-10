@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
@@ -22,10 +23,11 @@ import java.io.UnsupportedEncodingException;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private String serverAndPort = "tcp://m21.cloudmqtt.com:10988";
+    private String serverAndPort = "tcp://m20.cloudmqtt.com:13789";
     private MqttAndroidClient client;
     private Button publishBtn;
     private Button subBtn;
+    private EditText publishMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         publishBtn = findViewById(R.id.publishBtn);
         subBtn = findViewById(R.id.subBtn);
-        connect("phpahlio", "fZFhQHj3m358");
+        publishMessage = findViewById(R.id.etMessage);
+        connect("cadobfeg", "GadV6ZHExG7T");
         publishBtn.setOnClickListener((View v)->publish());
         subBtn.setOnClickListener((View v)->subscribe());
     }
@@ -69,8 +72,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void publish() {
+
         String topic = "foo/bar";
-        String payload = "the payload";
+        String payload = publishMessage.getText().toString();
+        publishMessage.setText("");
         byte[] encodedPayload = new byte[0];
         try {
             encodedPayload = payload.getBytes("UTF-8");
