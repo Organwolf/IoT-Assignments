@@ -7,8 +7,8 @@
 
 //  Hue constants
  
-const char hueHubIP[] = "192.168.20.151";  // Hue hub IP
-const char hueUsername[] = "19eSZFKKJaNnYeRtIRYXV0MobofTkSBrPXrNKUn4";  // Hue username
+const char hueHubIP[] = "192.168.20.163";  // Hue hub IP
+const char hueUsername[] = "q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu";  // Hue username
 const int hueHubPort = 80;
 
 // Hue variables
@@ -23,7 +23,7 @@ String hueBriTest = "";
 //  Ethernet
  
 byte mac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };  // Can we set it ourselves?
-IPAddress ip(192,168,20,200);  // Ethernet shield IP
+IPAddress ip(192,168,20,222);  // Ethernet shield IP
 EthernetClient client;
 
 // Ultra sound
@@ -90,7 +90,7 @@ void loop() {
   else {
     hueCmd = "{\"bri\": 150}";
   } 
-  GetHue();
+ // GetHue();
   Serial.println("Hue brightness " + hueBriTest);
   SetHue();   
   delay(500);
@@ -108,7 +108,7 @@ void loop() {
     Get light state (on,bri,hue)
  
 */
-
+/*
 boolean GetHue()
 {
   if (client.connect(hueHubIP, hueHubPort))
@@ -162,7 +162,7 @@ boolean GetHue()
   else
     return false;  // error reading on,bri,hue
 }
-
+*/
 /*
  
     SetHue
@@ -176,10 +176,11 @@ boolean SetHue()
   {
     while (client.connected())
     {
+      
       client.print("PUT /api/");
       client.print(hueUsername);
       client.print("/lights/");
-      client.print(1);  // hueLight zero based, add 1
+      client.print(5);  // hueLight zero based, add 1
       client.println("/state HTTP/1.1");
       client.println("keep-alive");
       client.print("Host: ");
