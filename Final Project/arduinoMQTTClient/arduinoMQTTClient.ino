@@ -1,7 +1,7 @@
 /*
- * Code that connects an Arduino + ethernet shield to an MQTT broker.
- * With an established connection it then subscribes to a topic.
- * Via the callback method messages are recieved and princed to the console
+ * Send a message to lamp_1
+ * if the message is of lenght 2 you can toggle the 5th lamp
+ * if the meggafge is of length 3 a get request is printed to the console
  * 
  * Authors: Aron P, Filip N, Jesper A
  */
@@ -35,10 +35,6 @@ const char hueHubIP[] = "192.168.20.163";  // Hue hub IP
 const char hueUsername[] = "q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu";  // Hue username
 const int hueHubPort = 80;
 
-const char lamp1 = 1;
-const char lamp2 = 2;
-const char lamp3 = 3;
-
 // Hue variables
 
 unsigned int hueLight;  // target light
@@ -46,21 +42,22 @@ String hueOn;  // on/off
 int hueBri;  // brightness value
 long hueHue;  // hue value
 String hueCmd = "{\"on\": false}";  // Hue command
-String hueBriTest = "first time";
+String getMessage;
 
 // Other variables
 
 bool toggle = true;
+String readString;
+char c;
+int counter;
 
 // GetHue - Get light state (on,bri,hue)
 
 boolean GetHue()
 {
-  Serial.println(ethClient.connect(hueHubIP, hueHubPort));
   if (ethClient.connect(hueHubIP, hueHubPort))
   {
-    Serial.println("second");
-    ethClient.print("GET /api/q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu/lights/1/");
+    ethClient.print("GET /api/q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu/lights/5/");
     //client.print(hueUsername);
     //client.print("/lights/1");
     //client.print(1);  // hueLight zero based, add 1
@@ -75,9 +72,13 @@ boolean GetHue()
     {
       while (ethClient.available())
       {
-        ethClient.findUntil("\"bri\":", "\"bri\":");
-        hueBriTest = ethClient.readStringUntil(',');
-        break;  // not capturing other light attributes yet
+        counter++;
+        c = ethClient.read();
+        if (counter > 421){
+          readString += c;
+          // is it possible to use a findUntil 
+          // instead of this solution
+        }
       }
       break;
     }
@@ -132,13 +133,23 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
   delay(10);
   mqttClient.disconnect();
-  if(toggle){
-    hueCmd = "{\"on\": true}";
-    SetHue();
+  if(length == 3){
+    if(toggle){
+      hueCmd = "{\"on\": true}";
+      SetHue();
+    }
+    else {
+      hueCmd = "{\"on\": false}";
+      SetHue();
+    }
   }
-  else {
-    hueCmd = "{\"on\": false}";
-    SetHue();
+  else if(length == 2){
+    mqttClient.disconnect();
+    GetHue();
+    Serial.println(readString);
+  }
+  else{
+    Serial.println("other length");
   }
 
 
