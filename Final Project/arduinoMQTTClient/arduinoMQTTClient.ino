@@ -45,9 +45,9 @@ int port = 13789;
 char* myClientID = "manuels";
 char* myUsername = "cadobfeg";
 char* myPassword = "GadV6ZHExG7T";
-char* topic_lamp_1 = lamp_1;
-char* topic_lamp_2 = lamp_2;
-char* topic_lamp_3 = lamp_3;
+char* topic_lamp_1 = "lamp_1";
+char* topic_lamp_2 = "lamp_2";
+char* topic_lamp_3 = "lamp_3";
 
 // Other variables
 
