@@ -43,37 +43,10 @@ int hueBri;  // brightness value
 long hueHue;  // hue value
 String hueCmd = "{\"on\": false}";  // Hue command
 String getMessage;
-
-// Other variables
-
-PubSubClient client(ethClient);
-// all valiables for MQTT are user specific
-// change if you use another broker
-IPAddress server(54,75,8,165);
-int port = 13789;
-char* myClientID = "manuels";
-char* myUsername = "cadobfeg";
-char* myPassword = "GadV6ZHExG7T";
-char* topic_lamp_1 = "lamp_1";
-char* topic_lamp_2 = "lamp_2";
-char* topic_lamp_3 = "lamp_3";
-PubSubClient client(ethClient);
-// all valiables for MQTT are user specific
-// change if you use another broker
-IPAddress server(54,75,8,165);
-int port = 13789;
-char* myClientID = "manuels";
-char* myUsername = "cadobfeg";
-char* myPassword = "GadV6ZHExG7T";
-char* topic_lamp_1 = lamp_1;
-char* topic_lamp_2 = lamp_2;
-char* topic_lamp_3 = lamp_3;
-// Do we use these 4 variables?
 bool toggle = true;
 String readString;
 char c;
 int counter;
-
 
 // GetHue - Get light state (on,bri,hue)
 
