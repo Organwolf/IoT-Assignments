@@ -48,6 +48,35 @@ String readString;
 char c;
 int counter;
 
+// Setup
+
+void setup() {
+  
+  Serial.begin(9600);
+  Serial.println("Connecting w. ethernet shield");
+  
+  mqttClient.setServer(server, port);
+  mqttClient.setCallback(callback);
+  
+  Ethernet.begin(mac,ip);
+  
+  delay(2000);
+  Serial.println("Ready.");
+
+}
+
+// Main Loop
+
+void loop() {
+
+  if (!mqttClient.connected()) {
+    reconnect(topic_lamp_1);
+  }
+  
+  mqttClient.loop();
+  
+}
+
 // GetHue - Get light state (on,bri,hue)
 
 boolean GetHue()
@@ -86,34 +115,33 @@ boolean GetHue()
     return false;  // error reading on,bri,hue
 }
 
+// Set hue -rename to somevalue or setcmd
 
-// Setup
-
-void setup() {
-  
-  Serial.begin(9600);
-  Serial.println("Connecting w. ethernet shield");
-  
-  mqttClient.setServer(server, port);
-  mqttClient.setCallback(callback);
-  
-  Ethernet.begin(mac,ip);
-  
-  delay(2000);
-  Serial.println("Ready.");
-
-}
-
-// Main Loop
-
-void loop() {
-
-  if (!mqttClient.connected()) {
-    reconnect(topic_lamp_1);
+boolean SetHue()
+{
+  if (ethClient.connect(hueHubIP, hueHubPort))
+  {
+    while (ethClient.connected())
+    {
+      ethClient.print("PUT /api/");
+      ethClient.print(hueUsername);
+      ethClient.print("/lights/");
+      ethClient.print(5);  // hueLight zero based, lamp 5
+      ethClient.println("/state HTTP/1.1");
+      ethClient.println("keep-alive");
+      ethClient.print("Host: ");
+      ethClient.println(hueHubIP);
+      ethClient.print("Content-Length: ");
+      ethClient.println(hueCmd.length());
+      ethClient.println("Content-Type: text/plain;charset=UTF-8");
+      ethClient.println();  // blank line before body
+      ethClient.println(hueCmd);  // Hue command
+    }
+    ethClient.stop();
+    return true;  // command executed
   }
-  
-  mqttClient.loop();
-  
+  else
+    return false;  // command failed
 }
 
 // Callback - called when message is recieved
@@ -179,34 +207,4 @@ void changeStuff() {
   }
     delay(2000);
     Serial.println("please work!");
-}
-
-
-// Set hue -rename to somevalue or setcmd
-
-boolean SetHue()
-{
-  if (ethClient.connect(hueHubIP, hueHubPort))
-  {
-    while (ethClient.connected())
-    {
-      ethClient.print("PUT /api/");
-      ethClient.print(hueUsername);
-      ethClient.print("/lights/");
-      ethClient.print(5);  // hueLight zero based, lamp 5
-      ethClient.println("/state HTTP/1.1");
-      ethClient.println("keep-alive");
-      ethClient.print("Host: ");
-      ethClient.println(hueHubIP);
-      ethClient.print("Content-Length: ");
-      ethClient.println(hueCmd.length());
-      ethClient.println("Content-Type: text/plain;charset=UTF-8");
-      ethClient.println();  // blank line before body
-      ethClient.println(hueCmd);  // Hue command
-    }
-    ethClient.stop();
-    return true;  // command executed
-  }
-  else
-    return false;  // command failed
 }
