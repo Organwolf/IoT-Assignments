@@ -113,7 +113,7 @@ void loop() {
   }
   
   mqttClient.loop();
-
+  
 }
 
 // Callback - called when message is recieved
@@ -148,9 +148,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   else{
     Serial.println("other length");
   }
-
-
-  
 }
 
 // Reconnect
