@@ -11,7 +11,7 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 
-//  Ethernet
+// Ethernet
  
 byte mac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };  // Can we set it ourselves?
 IPAddress ip(192,168,20,222);  // Ethernet shield IP
@@ -50,8 +50,8 @@ int counter;
 
 // Setup
 
-void setup() {
-  
+void setup()
+{  
   Serial.begin(9600);
   Serial.println("Connecting w. ethernet shield");
   
@@ -62,19 +62,17 @@ void setup() {
   
   delay(2000);
   Serial.println("Ready.");
-
 }
 
 // Main Loop
 
-void loop() {
-
-  if (!mqttClient.connected()) {
+void loop() 
+{
+  if (!mqttClient.connected()) 
+  {
     reconnect(topic_lamp_1);
-  }
-  
+  } 
   mqttClient.loop();
-  
 }
 
 // GetHue - Get light state (on,bri,hue)
@@ -146,8 +144,8 @@ boolean SetHue()
 
 // Callback - called when message is recieved
 
-void callback(char* topic, byte* payload, unsigned int length) {
-
+void callback(char* topic, byte* payload, unsigned int length) 
+{
   toggle = !toggle;
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -180,7 +178,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 // Reconnect
 
-void reconnect(char* topic) {
+void reconnect(char* topic) 
+{
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
@@ -199,7 +198,8 @@ void reconnect(char* topic) {
   }
 }
 
-void changeStuff() {
+void changeStuff() 
+{
     delay(100);
   if (ethClient.connect(hueHubIP, hueHubPort))
   {
