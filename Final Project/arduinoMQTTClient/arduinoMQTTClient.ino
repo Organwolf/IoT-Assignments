@@ -11,7 +11,7 @@
 
 // check library towards shield
 #include <SPI.h>
-#include <Ethernet2.h>
+#include <Ethernet.h>
 #include <PubSubClient.h>
 #include <TimerOne.h>
 
@@ -46,15 +46,17 @@ const int hueHubPort = 80;
 // Hue variables
 
 unsigned int hueLight;  // tar light
-String hueOn;  // on/off
-int hueBri;  // brightness value
-long hueHue;  // hue value
+String hueOn ="";  // on/off
+String hueBri ="";  // brightness value
+String hueHue ="";  // hue value - does it have to be a long?
 String hueCmd = "{\"on\": false}";  // Hue command
 String Message;
 bool toggle = true;
-String readString;
+String lampStatus;
 char c;
 int counter;
+
+char charBuf[100];
 
 // Setup
 
@@ -88,36 +90,41 @@ void loop()
 
 // Hue -  light state (on,bri,hue)
 
-boolean GET(String lamp)
+boolean GET(int light)
 {
   if (ethClient.connect(hueHubIP, hueHubPort))
   {
-    //ethClient.print(" /api/q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu/lights/5/");
-    ethClient.print(" /api/q0fHaaAkdaG0KZipHwC6e4tbyeJCNH1jxAVNYEWu/lights/"+lamp+"/");
-    //client.print(hueUsername);
-    //client.print("/lights/1");
-    //client.print(1);  // hueLight zero based, add 1
+    ethClient.print("GET /api/");
+    ethClient.print(hueUsername);
+    ethClient.print("/lights/");
+    ethClient.print("1");
     ethClient.println(" HTTP/1.1");
     ethClient.print("Host: ");
     ethClient.println(hueHubIP);
     ethClient.println("Content-type: application/json");
     ethClient.println("keep-alive");
     ethClient.println();
-    delay(500);
     while (ethClient.connected())
     {
-      while (ethClient.available())¨
+      Serial.println("Hello fucking program");
+      if(ethClient.available())
       {
-        counter++;
-        c = ethClient.read();
-        if (counter > 421){
-          readString += c;
-          // is it possible to use a findUntil 
-          // instead of this solution
-        }
+        
+//       Serial.println(ethClient.readStringUntil('\0'));
+        ethClient.findUntil("\"on\":", "\"effect\":");
+        hueOn = ethClient.readStringUntil(','); // if light is on, set variable to true
+        ethClient.findUntil("\"bri\":", "\"effect\":");
+        hueBri = ethClient.readStringUntil(','); // set variable to brightness value
+        ethClient.findUntil("\"hue\":", "\"effect\":");
+        hueHue = ethClient.readStringUntil(','); // set variable to hue value
+
+//        Serial.println("HueOn: " + hueOn);
+//        Serial.println("HueBri: " + hueBri);
+//        Serial.println("HueHue: " + hueHue);
+        break; // not capturing other light attributes yet        
       }
-      break;
     }
+    //Serial.println("stop");
     ethClient.stop();
     return true;  // captured on,bri,hue
   }
@@ -167,9 +174,19 @@ void callback(char* topic, byte* payload, unsigned int length)
   }
   Serial.println();
   delay(10);
+//  mqttClient.disconnect();
+  hueCmd = "{\"on\": true}";
+  //SetHue();
+  //reconnect();
   mqttClient.disconnect();
-  hueCmd = "{\"on\": false}";
-  SetHue();
+  GET(1);
+  reconnect();
+ // lampStatus = "hueOn: " + hueOn + " hueBri: " + hueBri + " hueHue: " + hueHue;
+  Serial.println("hueOn: " + hueOn + " hueBri: " + hueBri + " hueHue: " + hueHue);
+  hueOn.toCharArray(charBuf, 100);
+  Serial.println(charBuf);
+  mqttClient.publish(Lamp_1, charBuf, true);
+  //mqttClient.publish(Lamp_1, "Communication baby");
 }
 
 // Reconnect
@@ -185,13 +202,13 @@ void reconnect()
       // ... and resubscribe
       mqttClient.subscribe(Lamp_1);
       mqttClient.subscribe(Lamp_2);
-      mqttClient.subscribe(Lamp_3);
+      //mqttClient.subscribe(Lamp_3);
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqttClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 0.5 seconds before retrying
-      delay(5000);
+      //delay(500);
     }
   }
 }
