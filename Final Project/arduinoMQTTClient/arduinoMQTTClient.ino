@@ -22,10 +22,10 @@ EthernetClient ethClient;
 // PubSubClient
 PubSubClient mqttClient(ethClient);
 IPAddress server(54, 75, 8, 165);
-int port = 16982;
-char* myClientID = "manuels";
-char* myUsername = "gsbbbjxh";
-char* myPassword = "98Flmcp5Y9ul";
+int port =  13789;
+char* myClientID = "test-instance";
+char* myUsername = "cadobfeg";
+char* myPassword = "GadV6ZHExG7T";
 char* Lamp_1 = "Lamp_1";
 char* Lamp_2 = "Lamp_2";
 char* Lamp_3 = "Lamp_3";
@@ -55,12 +55,12 @@ void setup()
 
   Ethernet.begin(mac, ip);
   Serial.println("Ready. Ethernet connected");
-
+  delay(50);
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-  timer.initialize(2000000);                              // doesn't work for 20 secs - try working with periods instead
-  timer.attachInterrupt(updateInfo);
+//  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
+//  timer.attachInterrupt(updateInfo);
 
 }
 
@@ -126,7 +126,6 @@ boolean SetHue(int light)
       ethClient.println();
       ethClient.println(hueCmd);
     }
-
     return true;
   }
   else
@@ -138,16 +137,18 @@ boolean SetHue(int light)
 void callback(char* topic, byte* payload, unsigned int length)
 // expected input: {"on":true, "sat":254, "bri":254,"hue":10000}
 {
-    mqttClient.disconnect();
-//    Serial.println();
-//    Serial.print("Message arrived [");
-//    Serial.print(topic);
-//    Serial.print("] ");
+    hueCmd = "";
+    //timer.detachInterrupt();
     for (int i=0;i<length;i++) {
-      buf += (char)payload[i];
+      hueCmd += (char)payload[i];
     }
-    Serial.println(buf);
+    Serial.println(hueCmd);
+    Serial.println(lampNbr(topic));
+    mqttClient.disconnect();
+    SetHue(lampNbr(topic));
+    ethClient.stop();
     reconnect();
+    
 }
 
 // Reconnect
@@ -155,8 +156,10 @@ void callback(char* topic, byte* payload, unsigned int length)
 void reconnect()
 {
   // Loop until we're reconnected
+  Serial.print("Connecting...");
   while (!mqttClient.connected()) {
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
+      Serial.println("Connected");
       mqttClient.subscribe(Lamp_1);
       mqttClient.subscribe(Lamp_2);
       mqttClient.subscribe(Lamp_3);
@@ -191,4 +194,11 @@ void PublishToBroker()
   }
 }
 
+int lampNbr(char* topic){
+  if(strcmp(Lamp_1, topic)==0){
+    return 1;
+  } else if (strcmp(Lamp_2, topic)==0){
+    return 2;
+  } else { return 3; }
+}
 
