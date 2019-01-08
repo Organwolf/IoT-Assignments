@@ -45,6 +45,7 @@ String hueLightInfo2 = "";
 String hueLightInfo3 = "";
 String lampInformation[4];
 int counter = 1;
+String buf; 
 
 
 void setup()
@@ -53,15 +54,14 @@ void setup()
   //Serial.println("Connecting w. ethernet shield");
 
   Ethernet.begin(mac, ip);
+  Serial.println("Ready. Ethernet connected");
 
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-  timer.initialize(2000000);
+  timer.initialize(2000000);                              // doesn't work for 20 secs - try working with periods instead
   timer.attachInterrupt(updateInfo);
 
-  delay(2000);
-  Serial.println("Ready. Ethernet connected");
 }
 
 void loop()
@@ -136,14 +136,18 @@ boolean SetHue(int light)
 // Callback - called when message is recieved
 
 void callback(char* topic, byte* payload, unsigned int length)
+// expected input: {"on":true, "sat":254, "bri":254,"hue":10000}
 {
-  //  Serial.print("Message arrived [");
-  //  Serial.print(topic);
-  //  Serial.print("] ");
-  //  for (int i=0;i<length;i++) {
-  //    Serial.print((char)payload[i]);
-  //  }
-  //  mqttClient.disconnect();
+    mqttClient.disconnect();
+//    Serial.println();
+//    Serial.print("Message arrived [");
+//    Serial.print(topic);
+//    Serial.print("] ");
+    for (int i=0;i<length;i++) {
+      buf += (char)payload[i];
+    }
+    Serial.println(buf);
+    reconnect();
 }
 
 // Reconnect
