@@ -59,8 +59,8 @@ void setup()
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-//  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
-//  timer.attachInterrupt(updateInfo);
+  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
+  timer.attachInterrupt(updateInfo);
 
 }
 
@@ -138,7 +138,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 // expected input: {"on":true, "sat":254, "bri":254,"hue":10000}
 {
     hueCmd = "";
-    //timer.detachInterrupt();
+    timer.detachInterrupt();
     for (int i=0;i<length;i++) {
       hueCmd += (char)payload[i];
     }
@@ -148,6 +148,8 @@ void callback(char* topic, byte* payload, unsigned int length)
     SetHue(lampNbr(topic));
     ethClient.stop();
     reconnect();
+    timer.initialize(20000000);  
+    timer.attachInterrupt(updateInfo);
     
 }
 
@@ -171,11 +173,14 @@ void reconnect()
 
 void updateInfo()
 {
+  Serial.println("Entering callback function...");
   mqttClient.disconnect();
   GET(1);
   GET(2);
   GET(3);
   PublishToBroker();
+  reconnect();
+  
 }
 
 void PublishToBroker()
