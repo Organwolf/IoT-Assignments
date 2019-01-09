@@ -32,7 +32,7 @@ char* Lamp_3 = "Lamp_3";
 char* lampTopic = "";
 //  Hue constants
 const char hueHubIP[] = "192.168.20.107";
-const char hueUsername[] = "lWKI7ZSLVmTyyfXiM58rDmBEQVl0-HG3RIxO6NLd";
+const char hueUsername[] = "0MCnD713Gd0A3VEh2lEMiiKhArDka3fXZbWz-gys";
 const int hueHubPort = 80;
 // Hue variables
 unsigned int hueLight;
@@ -59,8 +59,8 @@ void setup()
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-//  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
-//  timer.attachInterrupt(updateInfo);
+  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
+  timer.attachInterrupt(updateInfo);
 
 }
 
@@ -70,6 +70,7 @@ void loop()
   {
     reconnect();
   }
+  Serial.println("Loop called");
   mqttClient.loop();
 }
 
@@ -137,18 +138,19 @@ boolean SetHue(int light)
 void callback(char* topic, byte* payload, unsigned int length)
 // expected input: {"on":true, "sat":254, "bri":254,"hue":10000}
 {
+  Serial.println("CB entered");
     hueCmd = "";
-    //timer.detachInterrupt();
+    timer.stop();
     for (int i=0;i<length;i++) {
       hueCmd += (char)payload[i];
     }
-    Serial.println(hueCmd);
-    Serial.println(lampNbr(topic));
+    //Serial.println(hueCmd);
+    //Serial.println(lampNbr(topic));
     mqttClient.disconnect();
     SetHue(lampNbr(topic));
     ethClient.stop();
     reconnect();
-    
+    timer.resume();
 }
 
 // Reconnect
@@ -163,6 +165,7 @@ void reconnect()
       mqttClient.subscribe(Lamp_1);
       mqttClient.subscribe(Lamp_2);
       mqttClient.subscribe(Lamp_3);
+      
     } else {
       delay(1000);
     }
@@ -184,13 +187,10 @@ void PublishToBroker()
   if (mqttClient.connected()) {
     //Serial.println("Publishing");
     mqttClient.publish(Lamp_1, lampInformation[1].c_str()); //True
-    Serial.println(lampInformation[1]);
     delay(10);
     mqttClient.publish(Lamp_2, lampInformation[2].c_str());   //True
-    Serial.println(lampInformation[2]);
     delay(10);
     mqttClient.publish(Lamp_3, lampInformation[3].c_str());   //True
-    Serial.println(lampInformation[3]);
   }
 }
 
