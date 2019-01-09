@@ -163,8 +163,8 @@ void reconnect()
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
       Serial.println("Connected");
       mqttClient.subscribe(Lamp_1);
-      mqttClient.subscribe(Lamp_2);
-      mqttClient.subscribe(Lamp_3);
+      //mqttClient.subscribe(Lamp_2);     //Need to be able to subsribe to all three.
+      //mqttClient.subscribe(Lamp_3);
       
     } else {
       delay(1000);
