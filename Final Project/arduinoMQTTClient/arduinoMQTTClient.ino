@@ -29,12 +29,13 @@ char* myPassword = "GadV6ZHExG7T";
 char* Lamp_status = "Lamp_status";
 char* Lamp_set = "Lamp_set";
 //  Hue constants
-const char hueHubIP[] = "192.168.20.107";
-const char hueUsername[] = "BCBtcWiWSkyW7iiHn980aGJrtbA4PBrdVe9xSyBP";
+const char hueHubIP[] = "192.168.20.110";
+const char hueUsername[] = "FAyiRdDomCiWSv4dDd1xm9egwBz6uBJ36KF7bbth";
 const int hueHubPort = 80;
 // Hue variables
 unsigned int hueLight;
 String hueOn = "";
+String hueSat = "";
 String hueBri = "";
 String hueHue = "";
 String lampInformation[4];
@@ -50,8 +51,8 @@ void setup()
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-  //timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
-  //timer.attachInterrupt(updateInfo);
+  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
+  timer.attachInterrupt(updateInfo);
 
 }
 
@@ -61,11 +62,11 @@ void loop()
   {
     reconnect();
   }
-  Serial.println("Loop called");
+  //Serial.println("Loop called");
   mqttClient.loop();
 }
 
-void GET(int light)
+void GetHue(int light)
 {
   if (ethClient.connect(hueHubIP, hueHubPort)) {
     ethClient.print("GET /api/");
@@ -82,16 +83,17 @@ void GET(int light)
     {
       if (ethClient.available())
       {
+        //Serial.println(ethClient.readStringUntil('\0'));
         ethClient.findUntil("\"on\":", "\"effect\":");
         hueOn = ethClient.readStringUntil(','); // if light is on, set variable to true
         ethClient.findUntil("\"bri\":", "\"effect\":");
         hueBri = ethClient.readStringUntil(','); // set variable to brightness value
-        ethClient.findUntil("\"hue\":", "\"effect\":");
-        
-        // logg saturation as well!!
-        
+        ethClient.findUntil("\"hue\":", "\"effect\":");     
         hueHue = ethClient.readStringUntil(','); // set variable to hue value
-        lampInformation[light] = "Light: " + String(light) + " hueOn: " + hueOn + " hueBri: " + hueBri + " hueHue: " + hueHue;
+        ethClient.findUntil("\"sat\":", "\"effect\":");
+        hueSat = ethClient.readStringUntil(','); // if light is on, set variable to true
+        //lampInformation[light] = "{\"on\":" + hueOn + "\"bri\":" + hueBri + "\"hue\":" + hueHue + "\"sat\":" + hueSat + "}";
+        lampInformation[light] = hueOn + "," + hueBri + "," + hueHue + "," + hueSat;
         break;
       }
     }
@@ -122,16 +124,13 @@ void SetHue(int light, String cmd)
   }
 }
 
-// Callback - called when message is recieved
-
 void callback(char* topic, byte* payload, unsigned int length)
-// expected input: {"on":true, "sat":254, "bri":254, "hue":10000}
 {
   Serial.println("CB entered");
   Serial.println(String(length));
     int index = 1;
     String inputStr = "";
-    //timer.stop();
+    timer.stop();
     for (int i=0;i<length;i++) {
       char c = (char)payload[i];
       if(!(c == '*')){
@@ -147,14 +146,12 @@ void callback(char* topic, byte* payload, unsigned int length)
     mqttClient.disconnect();
     // SetHue sätter inte värden efter topic längre isf   
     SetHue(1, lampInformation[1]);
-    //SetHue(2, lampInformation[2]);
-    //SetHue(3, lampInformation[3]);
+    SetHue(2, lampInformation[2]);
+    SetHue(3, lampInformation[3]);
     ethClient.stop();
     reconnect();
-    //timer.resume();
+    timer.resume();
 }
-
-// Reconnect
 
 void reconnect()
 {
@@ -163,7 +160,8 @@ void reconnect()
   while (!mqttClient.connected()) {
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
       Serial.println("Connected");
-      mqttClient.subscribe(Lamp_set);      
+      mqttClient.subscribe(Lamp_set);
+      delay(20);    
     } else {
       delay(1000);
     }
@@ -174,13 +172,11 @@ void updateInfo()
 {
   String lampStatus = "";
   mqttClient.disconnect();
-  GET(1);
-  //Serial.println(lampInformation[1]);
-  GET(2);
+  GetHue(1);
+  GetHue(2);
   //Serial.println(lampInformation[2]);
-  GET(3);
-  
-  // Concatenate all info from lamps seperated by '*'
+  GetHue(3);
+  // Concatenate info
   lampStatus = lampInformation[1]+"*"+lampInformation[2]+"*"+lampInformation[3]+"*";
   PublishToBroker(lampStatus);
 }
@@ -189,15 +185,8 @@ void PublishToBroker(String lampStatus)
 {
   reconnect();
   if (mqttClient.connected()) {
+    Serial.println("Publishing ...");
     mqttClient.publish(Lamp_status, lampStatus.c_str());
   }
 }
-
-//int lampNbr(char* topic){
-//  if(strcmp(Lamp_1, topic)==0){
-//    return 1;
-//  } else if (strcmp(Lamp_2, topic)==0){
-//    return 2;
-//  } else { return 3; }
-//}
 
