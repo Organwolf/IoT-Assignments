@@ -103,6 +103,7 @@ void GetHue(int light)
 
 void SetHue(int light, String cmd)
 {
+  Serial.println(light);
   if (ethClient.connect(hueHubIP, hueHubPort))
   {      
     while (ethClient.connected())
@@ -146,7 +147,11 @@ void callback(char* topic, byte* payload, unsigned int length)
     mqttClient.disconnect();
     // SetHue sätter inte värden efter topic längre isf   
     SetHue(1, lampInformation[1]);
+    delay(20);
+    ethClient.stop();
     SetHue(2, lampInformation[2]);
+    delay(20);
+    ethClient.stop();
     SetHue(3, lampInformation[3]);
     ethClient.stop();
     reconnect();
