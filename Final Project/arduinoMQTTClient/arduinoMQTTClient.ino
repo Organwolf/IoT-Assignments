@@ -26,10 +26,8 @@ int port =  13789;
 char* myClientID = "test-instance";
 char* myUsername = "cadobfeg";
 char* myPassword = "GadV6ZHExG7T";
-char* Lamp_1 = "Lamp_1";
-char* Lamp_2 = "Lamp_2";
-char* Lamp_3 = "Lamp_3";
-char* lampTopic = "";
+char* Lamp_status = "Lamp_status";
+char* Lamp_set = "Lamp_set";
 //  Hue constants
 const char hueHubIP[] = "192.168.20.107";
 const char hueUsername[] = "BCBtcWiWSkyW7iiHn980aGJrtbA4PBrdVe9xSyBP";
@@ -39,13 +37,7 @@ unsigned int hueLight;
 String hueOn = "";
 String hueBri = "";
 String hueHue = "";
-String hueCmd = "{\"on\": false}";
-String hueLightInfo1 = "";
-String hueLightInfo2 = "";
-String hueLightInfo3 = "";
 String lampInformation[4];
-String parsedCmds = "";
-
 
 void setup()
 {
@@ -95,6 +87,9 @@ void GET(int light)
         ethClient.findUntil("\"bri\":", "\"effect\":");
         hueBri = ethClient.readStringUntil(','); // set variable to brightness value
         ethClient.findUntil("\"hue\":", "\"effect\":");
+        
+        // logg saturation as well!!
+        
         hueHue = ethClient.readStringUntil(','); // set variable to hue value
         lampInformation[light] = "Light: " + String(light) + " hueOn: " + hueOn + " hueBri: " + hueBri + " hueHue: " + hueHue;
         break;
@@ -104,32 +99,27 @@ void GET(int light)
   ethClient.stop();
 }
 
-// Set hue
-
-boolean SetHue(int light, String cmd)
+void SetHue(int light, String cmd)
 {
   if (ethClient.connect(hueHubIP, hueHubPort))
-  {
+  {      
     while (ethClient.connected())
     {
       ethClient.print("PUT /api/");
       ethClient.print(hueUsername);
       ethClient.print("/lights/");
-      ethClient.print(light);
+      ethClient.print(String(light));
       ethClient.println("/state HTTP/1.1");
       ethClient.println("keep-alive");
       ethClient.print("Host: ");
       ethClient.println(hueHubIP);
       ethClient.print("Content-Length: ");
-      ethClient.println(hueCmd.length());
+      ethClient.println(cmd.length());
       ethClient.println("Content-Type: text/plain;charset=UTF-8");
       ethClient.println();
       ethClient.println(cmd);
     }
-    return true;
   }
-  else
-    return false;
 }
 
 // Callback - called when message is recieved
@@ -138,25 +128,27 @@ void callback(char* topic, byte* payload, unsigned int length)
 // expected input: {"on":true, "sat":254, "bri":254, "hue":10000}
 {
   Serial.println("CB entered");
+  Serial.println(String(length));
     int index = 1;
-    hueCmd = "";
+    String inputStr = "";
     //timer.stop();
     for (int i=0;i<length;i++) {
       char c = (char)payload[i];
       if(!(c == '*')){
-        hueCmd += c;
+        inputStr += c;
       }
-      else { Serial.print("else"); }
-      lampInformation[index] = hueCmd;
-      Serial.println(lampInformation[index]);
-      hueCmd = "";
-      index++;    
+      else {
+        lampInformation[index] = inputStr;
+        //Serial.println(inputStr);
+        inputStr = "";
+        index++; 
+      }   
     }
     mqttClient.disconnect();
-    // SetHue sätter inte värden efter topic längre isf
+    // SetHue sätter inte värden efter topic längre isf   
     SetHue(1, lampInformation[1]);
-    SetHue(2, lampInformation[2]);
-    SetHue(3, lampInformation[3]);
+    //SetHue(2, lampInformation[2]);
+    //SetHue(3, lampInformation[3]);
     ethClient.stop();
     reconnect();
     //timer.resume();
@@ -171,12 +163,7 @@ void reconnect()
   while (!mqttClient.connected()) {
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
       Serial.println("Connected");
-      mqttClient.subscribe(Lamp_1);
-      //mqttClient.loop();
-      //mqttClient.subscribe(Lamp_2);     //Need to be able to subsribe to all three.
-      //mqttClient.loop();
-      //mqttClient.subscribe(Lamp_3);
-      
+      mqttClient.subscribe(Lamp_set);      
     } else {
       delay(1000);
     }
@@ -185,31 +172,32 @@ void reconnect()
 
 void updateInfo()
 {
+  String lampStatus = "";
   mqttClient.disconnect();
   GET(1);
-  //GET(2);
-  //GET(3);
-  PublishToBroker();
+  //Serial.println(lampInformation[1]);
+  GET(2);
+  //Serial.println(lampInformation[2]);
+  GET(3);
+  
+  // Concatenate all info from lamps seperated by '*'
+  lampStatus = lampInformation[1]+"*"+lampInformation[2]+"*"+lampInformation[3]+"*";
+  PublishToBroker(lampStatus);
 }
 
-void PublishToBroker()
+void PublishToBroker(String lampStatus)
 {
   reconnect();
   if (mqttClient.connected()) {
-    //Serial.println("Publishing");
-    mqttClient.publish(Lamp_1, lampInformation[1].c_str()); //True
-    delay(10);
-    //mqttClient.publish(Lamp_2, lampInformation[2].c_str());   //True
-    delay(10);
-    //mqttClient.publish(Lamp_3, lampInformation[3].c_str());   //True
+    mqttClient.publish(Lamp_status, lampStatus.c_str());
   }
 }
 
-int lampNbr(char* topic){
-  if(strcmp(Lamp_1, topic)==0){
-    return 1;
-  } else if (strcmp(Lamp_2, topic)==0){
-    return 2;
-  } else { return 3; }
-}
+//int lampNbr(char* topic){
+//  if(strcmp(Lamp_1, topic)==0){
+//    return 1;
+//  } else if (strcmp(Lamp_2, topic)==0){
+//    return 2;
+//  } else { return 3; }
+//}
 
