@@ -207,7 +207,7 @@ void PublishToBroker(String lampStatus)
   reconnect();
   if (mqttClient.connected()) {
     Serial.println("Published");
-    mqttClient.publish(Lamp_status, lampStatus.c_str());
+    mqttClient.publish(Lamp_status, lampStatus.c_str(), true);
   }
 }
 
