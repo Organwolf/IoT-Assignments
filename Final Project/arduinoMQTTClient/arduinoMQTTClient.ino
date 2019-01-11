@@ -9,7 +9,7 @@
 // create MQTT labels 1, 2, 3 and use the "light" int to publish
 
 #include <SPI.h>
-#include <Ethernet.h>
+#include <Ethernet2.h>
 #include <PubSubClient.h>
 #include <TimerOne.h>
 
@@ -30,7 +30,7 @@ char* Lamp_status = "Lamp_status";
 char* Lamp_set = "Lamp_set";
 //  Hue constants
 const char hueHubIP[] = "192.168.20.110";
-const char hueUsername[] = "FAyiRdDomCiWSv4dDd1xm9egwBz6uBJ36KF7bbth";
+const char hueUsername[] = "8RwuA4-RXfa1YiwMfOM0l6mSs4w5j6JMfswfD836";
 const int hueHubPort = 80;
 // Hue variables
 unsigned int hueLight;
@@ -51,8 +51,8 @@ void setup()
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
 
-  timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
-  timer.attachInterrupt(updateInfo);
+  //timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
+  //timer.attachInterrupt(updateInfo);
 
 }
 
@@ -131,7 +131,7 @@ void callback(char* topic, byte* payload, unsigned int length)
   Serial.println(String(length));
     int index = 1;
     String inputStr = "";
-    timer.stop();
+    //timer.stop();
     for (int i=0;i<length;i++) {
       char c = (char)payload[i];
       if(!(c == '*')){
@@ -147,15 +147,15 @@ void callback(char* topic, byte* payload, unsigned int length)
     mqttClient.disconnect();
     // SetHue sätter inte värden efter topic längre isf   
     SetHue(1, lampInformation[1]);
-    delay(20);
+    //delay(20);
     ethClient.stop();
     SetHue(2, lampInformation[2]);
-    delay(20);
+    //delay(20);
     ethClient.stop();
     SetHue(3, lampInformation[3]);
     ethClient.stop();
     reconnect();
-    timer.resume();
+    //timer.resume();
 }
 
 void reconnect()
@@ -166,7 +166,7 @@ void reconnect()
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
       Serial.println("Connected");
       mqttClient.subscribe(Lamp_set);
-      delay(20);    
+      //delay(20);    
     } else {
       delay(1000);
     }
@@ -188,9 +188,10 @@ void updateInfo()
 
 void PublishToBroker(String lampStatus)
 {
+  Serial.println("Publishing ...");
   reconnect();
   if (mqttClient.connected()) {
-    Serial.println("Publishing ...");
+    Serial.println("Published");
     mqttClient.publish(Lamp_status, lampStatus.c_str());
   }
 }
