@@ -46,19 +46,12 @@ unsigned long period=20000;    // milliseconds for every interrupt
 void setup()
 {
   Serial.begin(9600);
-  //Serial.println("Connecting w. ethernet shield");
-
   Ethernet.begin(mac, ip);
   Serial.println("Ready. Ethernet connected");
   delay(50);
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
   startTime=millis();
-
-  //timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
-  //timer.attachInterrupt(updateInfo);
-  
-
 }
 
 void loop()
@@ -67,17 +60,13 @@ void loop()
   {
     reconnect();
   }
- // Serial.print("Time: ");
   currentTime=millis();
- 
-  //Serial.println("STARTTIME" + startTime);
+
   if((currentTime-startTime)>=period){
     Serial.println("TickTok");
     startTime=currentTime;
     updateInfo();
   }
-  
- // Serial.println("Loop called");
   mqttClient.loop();
 }
 
@@ -107,7 +96,6 @@ void GetHue(int light)
         hueHue = ethClient.readStringUntil(','); // set variable to hue value
         ethClient.findUntil("\"sat\":", "\"effect\":");
         hueSat = ethClient.readStringUntil(','); // if light is on, set variable to true
-        //lampInformation[light] = "{\"on\":" + hueOn + "\"bri\":" + hueBri + "\"hue\":" + hueHue + "\"sat\":" + hueSat + "}";
         lampInformation[light] = hueOn + "," + hueBri + "," + hueHue + "," + hueSat;
         break;
       }
@@ -146,7 +134,6 @@ void callback(char* topic, byte* payload, unsigned int length)
   Serial.println(String(length));
     int index = 1;
     String inputStr = "";
-    //timer.stop();
     for (int i=0;i<length;i++) {
       char c = (char)payload[i];
       if(!(c == '*')){
@@ -154,23 +141,18 @@ void callback(char* topic, byte* payload, unsigned int length)
       }
       else {
         lampInformation[index] = inputStr;
-        //Serial.println(inputStr);
         inputStr = "";
         index++; 
       }   
     }
-    mqttClient.disconnect();
-    // SetHue sätter inte värden efter topic längre isf   
+    mqttClient.disconnect(); 
     SetHue(1, lampInformation[1]);
-    //delay(20);
     ethClient.stop();
     SetHue(2, lampInformation[2]);
-    //delay(20);
     ethClient.stop();
     SetHue(3, lampInformation[3]);
     ethClient.stop();
     reconnect();
-    //timer.resume();
 }
 
 void reconnect()
@@ -180,8 +162,7 @@ void reconnect()
   while (!mqttClient.connected()) {
     if (mqttClient.connect(myClientID, myUsername, myPassword)) {
       Serial.println("Connected");
-      mqttClient.subscribe(Lamp_set);
-      //delay(20);    
+      mqttClient.subscribe(Lamp_set);   
     } else {
       delay(1000);
     }
@@ -194,7 +175,6 @@ void updateInfo()
   mqttClient.disconnect();
   GetHue(1);
   GetHue(2);
-  //Serial.println(lampInformation[2]);
   GetHue(3);
   // Concatenate info
   lampStatus = lampInformation[1]+"*"+lampInformation[2]+"*"+lampInformation[3]+"*";
