@@ -39,6 +39,9 @@ String hueSat = "";
 String hueBri = "";
 String hueHue = "";
 String lampInformation[4];
+unsigned long startTime;
+unsigned long currentTime;
+unsigned long period=20000;    // milliseconds for every interrupt
 
 void setup()
 {
@@ -50,9 +53,11 @@ void setup()
   delay(50);
   mqttClient.setServer(server, port);
   mqttClient.setCallback(callback);
+  startTime=millis();
 
   //timer.initialize(20000000);                              // doesn't work for 20 secs - try working with periods instead
   //timer.attachInterrupt(updateInfo);
+  
 
 }
 
@@ -62,7 +67,17 @@ void loop()
   {
     reconnect();
   }
-  //Serial.println("Loop called");
+ // Serial.print("Time: ");
+  currentTime=millis();
+ 
+  //Serial.println("STARTTIME" + startTime);
+  if((currentTime-startTime)>=period){
+    Serial.println("TickTok");
+    startTime=currentTime;
+    updateInfo();
+  }
+  
+ // Serial.println("Loop called");
   mqttClient.loop();
 }
 
